@@ -65,3 +65,9 @@ This project was created as part of my JavaScript learning journey to practice A
 ## License
 
 This project is intended for educational and practice purposes.
+
+## Author
+
+**İsmail Türkoğlu**
+
+- GitHub: [@ismailturkoglu](https://github.com/ismailturkoglu)
