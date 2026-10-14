@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Bootstrap -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css"
+      integrity="sha512-GQGU0fMMi238uA+a/bdWJfpUGKUkBdgfFdgBm72SUQ6BeyWjoY/ton0tEjH+OSH9iP4Dfh+7HM0I9f5eR0L/4w=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <style>
+      img {
+        height: 10rem;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      #neighbors .card {
+        cursor: pointer;
+      }
+    </style>
+    <title>Country Search Practice</title>
+  </head>
+  <body>
+    <div class="container my-5" id="country-details">
+      <!-- Search Bar -->
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="input-group">
+            <input
+              type="text"
+              class="form-control"
+              id="txtSearch"
+              placeholder="Enter Country Name (Ex: Turkey)"
+            />
+            <button id="btnSearch" type="button" class="btn btn-primary">
+              Search
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Country -->
+      <div class="card mb-3">
+        <div class="card-header">Country</div>
+        <div class="card-body">
+          <div id="country" class="row">
+            <!-- <div class="col-4">
+              <img style="width: 100%" src="img/tr.png" alt="" />
+            </div>
+            <div class="col-8">
+              <h3 class="card-title">Türkiye</h3>
+              <hr />
+              <div class="row">
+                <div class="col-4">Nüfus:</div>
+                <div class="col-8">84.5 milyon</div>
+              </div>
+              <div class="row">
+                <div class="col-4">Resmi Dili:</div>
+                <div class="col-8">Türkçe</div>
+              </div>
+              <div class="row">
+                <div class="col-4">Başkent</div>
+                <div class="col-8">Ankara</div>
+              </div>
+            </div> -->
+          </div>
+        </div>
+      </div>
+      <!-- Neighbors -->
+      <div class="card mb-3">
+        <div class="card-header">Neighbors</div>
+        <div class="card-body">
+          <div id="neighbors" class="row my-3"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const txtSearch = document.querySelector("#txtSearch");
+      const btnSearch = document.querySelector("#btnSearch");
+
+      function searchCountry() {
+        const text = txtSearch.value.trim();
+
+        if (!text) {
+          return;
+        }
+
+        getCountry(text);
+      }
+
+      btnSearch.addEventListener("click", searchCountry);
+      txtSearch.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+          searchCountry();
+        }
+      });
+
+      function getCountry(country) {
+        document.querySelector("#country").innerHTML = "";
+        document.querySelector("#neighbors").innerHTML = "";
+
+        const request = new XMLHttpRequest();
+
+        request.open(
+          `GET`,
+          `https://countries.dev/name/${encodeURIComponent(country)}`,
+        ); // country name
+        request.send();
+
+        request.addEventListener("load", function () {
+          // Controls request status
+          if (this.status < 200 || this.status >= 300) {
+            document.querySelector("#country").innerHTML =
+              `<p class="text-danger">Country not found.</p>`;
+            return;
+          }
+
+          let data;
+
+          // Controls data assignment
+          try {
+            data = JSON.parse(this.responseText);
+          } catch (error) {
+            document.querySelector("#country").innerHTML =
+              `<p class="text-danger">Invalid API response.</p>`;
+            return;
+          }
+
+          // Controls the data is array and not empty
+          if (!Array.isArray(data) || !data[0]) {
+            document.querySelector("#country").innerHTML =
+              `<p class="text-danger">Country not found.</p>`;
+            return;
+          }
+
+          const countryObject = data[0];
+          renderCountry(countryObject);
+          getNeighbors(...(countryObject.borders || []));
+        });
+
+        request.addEventListener("error", function () {
+          document.querySelector(`#country`).innerHTML =
+            `<p class="text-danger">Network error. Please try again.</p>`;
+        });
+      }
+
+      function getNeighbors(...codes) {
+        document.querySelector(".container #neighbors").innerHTML = "";
+        codes.forEach((code) => {
+          const request = new XMLHttpRequest();
+
+          request.open("GET", `https://countries.dev/alpha/${code}`);
+          request.send();
+
+          request.addEventListener("load", function () {
+            if (this.status < 200 || this.status >= 300) {
+              return;
+            }
+            let data;
+
+            try {
+              data = JSON.parse(this.responseText);
+            } catch (error) {
+              return;
+            }
+            if (!data || !data.name) {
+              return;
+            }
+
+            renderNeighbors(data);
+          });
+        });
+      }
+
+      function renderCountry(country) {
+        const language = country.languages?.[0]?.name || "Unknown";
+        const capital = country.capital || "Unknown";
+        const currency = country.currencies?.[0];
+        const currencyText = currency
+          ? `${currency.name || "Unknown"} (${currency.symbol || "No symbol"})`
+          : "Unknown";
+        const population = Number.isFinite(country.population)
+          ? country.population >= 1000000000
+            ? `${(country.population / 1000000000).toFixed(1)} billion`
+            : `${(country.population / 1000000).toFixed(1)} million`
+          : "Unknown";
+
+        const countryText = `
+        <div class="row">
+            <div class="col-4">
+              <img style="width: 100%" src="${country.flags.png}" alt="" />
+            </div>
+            <div class="col-8">
+              <h3 class="card-title">${country.name}</h3>
+              <hr />
+              <div class="row">
+                <div class="col-4">Population:</div>
+                <div class="col-8">${population}</div>
+              </div>
+              <div class="row">
+                <div class="col-4">Language:</div>
+                <div class="col-8">${language}</div>
+              </div>
+              <div class="row">
+                <div class="col-4">Capital:</div>
+                <div class="col-8">${capital}</div>
+              </div>
+              <div class="row">
+                <div class="col-4">Currency:</div>
+                <div class="col-8">${currencyText}</div>
+              </div>
+            </div>
+          </div>
+        `;
+        document
+          .querySelector(".container #country")
+          .insertAdjacentHTML("beforeend", countryText);
+      }
+
+      function renderNeighbors(country) {
+        const language = country.languages?.[0]?.name || "Unknown";
+        const capital = country.capital || "Unknown";
+        const population = !Number.isFinite(country.population)
+          ? "Unknown"
+          : country.population >= 1000000000
+            ? `${(country.population / 1000000000).toFixed(1)} billion`
+            : `${(country.population / 1000000).toFixed(1)} million`;
+
+        const neighborText = `
+        <div class="col-4 my-3" onclick="searchNeighbor(\`${country.name}\`)">
+          <div class="card h-100">
+            <img src="${country.flags.png}" alt="" class="card-img-top" />
+            <div class="card-body">
+              <h5 class="card-title">${country.name}</h5>
+            </div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item"><span>Population</span> : ${population}</li>
+              <li class="list-group-item"><span>Capital</span> : ${capital}</li>
+              <li class="list-group-item"><span>Language</span> : ${language}</li>
+            </ul>
+          </div>
+        </div>
+        `;
+        document
+          .querySelector(".container #neighbors")
+          .insertAdjacentHTML("beforeend", neighborText);
+      }
+
+      function searchNeighbor(country) {
+        txtSearch.value = country;
+        searchCountry();
+      }
+    </script>
+  </body>
+</html>
