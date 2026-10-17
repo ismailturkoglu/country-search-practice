@@ -21,6 +21,10 @@
       #neighbors .card {
         cursor: pointer;
       }
+
+      .container-div {
+        opacity: 0;
+      }
     </style>
     <title>Country Search Practice</title>
   </head>
@@ -42,12 +46,13 @@
           </div>
         </div>
       </div>
-      <!-- Country -->
-      <div class="card mb-3" id="country-details">
-        <div class="card-header">Search Result</div>
-        <div class="card-body">
-          <div id="country" class="row">
-            <!-- <div class="col-4">
+      <div class="container-div">
+        <!-- Country -->
+        <div class="card mb-3" id="country-details">
+          <div class="card-header">Search Result</div>
+          <div class="card-body">
+            <div id="country" class="row">
+              <!-- <div class="col-4">
               <img style="width: 100%" src="img/tr.png" alt="" />
             </div>
             <div class="col-8">
@@ -66,14 +71,15 @@
                 <div class="col-8">Ankara</div>
               </div>
             </div> -->
+            </div>
           </div>
         </div>
-      </div>
-      <!-- Neighbors -->
-      <div class="card mb-3">
-        <div class="card-header">Neighbors</div>
-        <div class="card-body">
-          <div id="neighbors" class="row my-3"></div>
+        <!-- Neighbors -->
+        <div class="card mb-3">
+          <div class="card-header">Neighbors</div>
+          <div class="card-body">
+            <div id="neighbors" class="row my-3"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -86,8 +92,10 @@
         const text = txtSearch.value.trim();
 
         if (!text) {
+          document.querySelector(".container-div").style.opacity = "0";
           return;
         }
+        document.querySelector(".container-div").style.opacity = "1";
 
         getCountry(text);
       }
@@ -150,6 +158,13 @@
 
       function getNeighbors(...codes) {
         document.querySelector(".container #neighbors").innerHTML = "";
+        if (codes.length == 0) {
+          const title = document.querySelector(
+            "#country .card-title",
+          ).innerText;
+          document.querySelector("#neighbors").innerHTML =
+            `<p class="text-danger">${title} has no neighbors.</p>`;
+        }
         codes.forEach((code) => {
           const request = new XMLHttpRequest();
 
